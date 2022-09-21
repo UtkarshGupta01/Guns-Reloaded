@@ -2,19 +2,17 @@ import pygame
 import random
 import math
 from pygame import mixer
+import time
 
 pygame.init()
 
 # Window
 screen = pygame.display.set_mode((1000, 600))
 
-# FPS 
-clock = pygame.time.Clock()
-
 # Icon and Caption
 icon = pygame.image.load("assets/icon.png")
 pygame.display.set_icon(icon)
-pygame.display.set_caption("Guns Reloaded")
+pygame.display.set_caption("First Hit Redemption")
 
 # Intro Music
 mixer.music.load("music/intro_music.wav")
@@ -23,16 +21,11 @@ mixer.music.play()
 # background
 back = pygame.image.load("assets/land.png")
 
-# Intro Font and Icon
-intro_font = pygame.image.load("assets/intro.png")
-w = intro_font.get_width()
-h = intro_font.get_height()
-intro_icon = pygame.transform.scale(intro_font, (int(w*2.2), int(h*2.2)))
-
-intro_icon = pygame.image.load("assets/intro_player.png")
+# Intro Icon
+intro_icon = pygame.image.load("assets/player.png")
 w = intro_icon.get_width()
 h = intro_icon.get_height()
-intro_icon = pygame.transform.scale(intro_icon, (int(w*0.65), int(h*0.65)))
+intro_icon = pygame.transform.scale(intro_icon, (int(w*2.2), int(h*2.2)))
 
 # gameover
 endgame = pygame.image.load("assets/endgame.png")
@@ -58,7 +51,7 @@ space_key_img = pygame.transform.scale(space_key_img, (int(w*1.7), int(h*1.7)))
 playerimg = pygame.image.load("assets/player_b.png")
 w = playerimg.get_width()
 h = playerimg.get_height()
-playerimg = pygame.transform.scale(playerimg, (int(w*0.95), int(h*0.95)))
+playerimg = pygame.transform.scale(playerimg, (int(w*1.5), int(h*1.5)))
 playerX = 50
 playerY = 280
 playerY_change = 0
@@ -70,28 +63,64 @@ h = p_bulletimg.get_height()
 p_bulletimg = pygame.transform.scale(p_bulletimg, (int(w*0.8), int(h*0.8)))
 p_bulletX = 50
 p_bulletY = 0
-p_bulletX_change = 2.7
+p_bulletX_change = 2.4
 p_bulletY_change = 0
 p_bullet = "load"
 
+# Power-ups
+dash_powerimg = pygame.image.load("assets/dash.png")
+w = dash_powerimg.get_width()
+h = dash_powerimg.get_height()
+dash_powerimg = pygame.transform.scale(dash_powerimg, (int(w*1), int(h*1)))
+dash_powerX = random.randint(936, 1000)
+dash_powerY = random.randint(0, 536)
+dash_powerY_change = 0
+dash_powerX_change = -0.4
+
+shield_powerimg = pygame.image.load("assets/shield.png")
+w = shield_powerimg.get_width()
+h = shield_powerimg.get_height()
+shield_powerimg = pygame.transform.scale(
+    shield_powerimg, (int(w*0.8), int(h*0.8)))
+shield_powerX = random.randint(936, 1000)
+shield_powerY = random.randint(0, 536)
+shield_powerY_change = 0
+shield_powerX_change = -0.4
+
 
 # Enemy1(gunner)
-gunnerimg = pygame.image.load("assets/gunner.png")
-gunnerX = random.randint(936, 1000)
-gunnerY = random.randint(0, 536)
-gunnerX_change = 70
-gunnerY_change = 0.75
+gunnerimg = []
+gunnerX = []
+gunnerY = []
+gunnerX_change = []
+gunnerY_change = []
+gunners = 3
+for g in range(gunners):
+    gunnerimg.append(pygame.image.load("assets/gunner.png"))
+    gunnerX.append(random.randint(936, 1000))
+    gunnerY.append(random.randint(0, 536))
+    gunnerX_change.append(70)
+    gunnerY_change.append(0.6)
 
 # Enemy Bullet
-e_bulletimg = pygame.image.load("assets/e_bullet.png")
-w = e_bulletimg.get_width()
-h = e_bulletimg.get_height()
-e_bulletimg = pygame.transform.scale(e_bulletimg, (int(w*0.8), int(h*0.8)))
-e_bulletX = 0
-e_bulletY = 0
-e_bulletX_change = -2.2
-e_bulletY_change = 0
-e_bullet = "load"
+e_bulletimg = []
+# w = e_bulletimg.get_width()
+# h = e_bulletimg.get_height()
+# e_bulletimg = pygame.transform.scale(e_bulletimg, (int(w*0.8), int(h*0.8)))
+e_bulletX = []
+e_bulletY = []
+e_bulletX_change = []
+e_bulletY_change = []
+e_bullet = []
+bullets = 3
+
+for e in range(bullets):
+    e_bulletimg.append(pygame.image.load("assets/e_bullet.png"))
+    e_bulletX.append(0)
+    e_bulletY.append(0)
+    e_bulletX_change.append(-1.8)
+    e_bulletY_change.append(0)
+    e_bullet.append("load")
 
 # Enemy2(burgler)
 burglerimg = []
@@ -99,52 +128,64 @@ burglerX = []
 burglerY = []
 burglerX_change = []
 burglerY_change = []
-burglers = 6
+burglers = 5
 
 for b in range(burglers):
     burglerimg.append(pygame.image.load("assets/burgler.png"))
     burglerX.append(random.randint(936, 1000))
     burglerY.append(random.randint(0, 536))
-    burglerX_change.append(-0.65)
+    burglerX_change.append(-0.5)
     burglerY_change.append(0)
-
-# Enemy3(Wagon)
-wagonimg = pygame.image.load("assets/wagon.png")
-w = wagonimg.get_width()
-h = wagonimg.get_height()
-wagonimg = pygame.transform.scale(wagonimg, (int(w*0.18), int(h*0.18)))
-wagonX = random.randint(936, 1000)
-wagonY = random.randint(0, 536)
-wagonX_change = 75
-wagonY_change = 1.65
 
 
 def player(x, y):
     screen.blit(playerimg, (x, y))
 
 
-def gunner(x, y):
-    screen.blit(gunnerimg, (x, y))
+def gunner(x, y, g):
+    screen.blit(gunnerimg[g], (x, y))
 
 
 def burgler(x, y, b):
     screen.blit(burglerimg[b], (x, y))
 
 
-def wagon(x, y):
-    screen.blit(wagonimg, (x, y))
+def dash_power(x, y):
+    screen.blit(dash_powerimg, (x, y))
+
+
+def shield_power(x, y):
+    screen.blit(shield_powerimg, (x, y))
+
+
+def dash_get(dash_powerX, dash_powerY, playerX, playerY):
+    distance = math.sqrt((math.pow(dash_powerX - playerX, 2)) +
+                         (math.pow(dash_powerY - playerY, 2)))
+    if distance < 50:
+        return True
+    else:
+        return False
+
+
+def shield_get(shield_powerX, shield_powerY, playerX, playerY):
+    distance = math.sqrt((math.pow(shield_powerX - playerX, 2)) +
+                         (math.pow(shield_powerY - playerY, 2)))
+    if distance < 50:
+        return True
+    else:
+        return False
 
 
 def fire_p_bullet(x, y):
     global p_bullet
     p_bullet = "shoot"
-    screen.blit(p_bulletimg, (x+84, y+30))
+    screen.blit(p_bulletimg, (x+75, y+38))
 
 
-def fire_e_bullet(x, y):
+def fire_e_bullet(x, y, e):
     global e_bullet
-    e_bullet = "shoot"
-    screen.blit(e_bulletimg, (x-28, y+28))
+    e_bullet[e] = "shoot"
+    screen.blit(e_bulletimg[e], (x, y))
 
 
 def chk_encounter_b(p_bulletX, p_bulletY, burglerX, burglerY):
@@ -169,34 +210,12 @@ def chk_encounter_g(p_bulletX, p_bulletY, gunnerX, gunnerY):
         return False
 
 
-def chk_encounter_w(p_bulletX, p_bulletY, wagonX, wagonY):
-    global wagon_dist
-    wagon_dist = math.sqrt(math.pow(wagonX-p_bulletX, 2) +
-                           (math.pow(wagonY-p_bulletY, 2)))
-
-    if wagon_dist < 55:
-        return True
-    else:
-        return False
-
-
 def chk_encounter_e(e_bulletX, e_bulletY, playerX, playerY):
     global player_dist
     player_dist = math.sqrt(math.pow(playerX-e_bulletX, 2) +
                             (math.pow(playerY-e_bulletY, 2)))
 
     if player_dist < 55:
-        return True
-    else:
-        return False
-
-
-def chk_collision(p_bulletX, p_bulletY, e_bulletX, e_bulletY):
-    global collision_dist
-    collision_dist = math.sqrt(math.pow(p_bulletX-e_bulletX, 2) +
-                               (math.pow(p_bulletY-e_bulletY, 2)))
-
-    if collision_dist < 55:
         return True
     else:
         return False
@@ -250,6 +269,7 @@ def show_score(x, y):
 # Texts
 
 # Intro
+intro_txt = pygame.font.Font("freesansbold.ttf", 60)
 play_txt = pygame.font.Font("freesansbold.ttf", 30)
 exit_txt = pygame.font.Font("freesansbold.ttf", 30)
 
@@ -259,6 +279,7 @@ controls_txt = pygame.font.Font("freesansbold.ttf", 20)
 # Game Over
 gameover_txt = pygame.font.Font("freesansbold.ttf", 80)
 total_txt = pygame.font.Font("freesansbold.ttf", 40)
+# restart_txt = pygame.font.Font("freesansbold.ttf", 30)
 quit_txt = pygame.font.Font("freesansbold.ttf", 30)
 
 # Score
@@ -270,6 +291,9 @@ scoreY = 10
 play_game = False
 playing = True
 
+# Time
+time_rem = 5
+
 
 while playing:
 
@@ -278,17 +302,19 @@ while playing:
 
         screen.blit(back, (0, 0))
 
-        screen.blit(intro_font, (160, 10))
+        intro_font = intro_txt.render(
+            "FIRST HIT REDEMPTION", True, (102, 51, 0))
+        screen.blit(intro_font, (150, 50))
 
-        screen.blit(intro_icon, (395, 130))
+        screen.blit(intro_icon, (440, 130))
 
         play_font = play_txt.render(
             "Press SPACE to Play", True, (0, 0, 0))
-        screen.blit(play_font, (360, 390))
+        screen.blit(play_font, (360, 370))
 
         quit_font = quit_txt.render(
             "Press ESC to QUIT", True, (0, 0, 0))
-        screen.blit(quit_font, (370, 430))
+        screen.blit(quit_font, (370, 410))
 
         screen.blit(w_key_img, (780, 430))
         w_font = controls_txt.render("Move Up", True, (0, 0, 0))
@@ -324,72 +350,90 @@ while playing:
 
         player(playerX, playerY)
 
+        # Powers
 
-        # Gunner All Functions
+        dash_powerX += dash_powerX_change
+        if dash_powerX <= 0:
+            dash_powerX = random.randint(936, 1000)
+            dash_powerY = random.randint(0, 536)
+            dash_powerX_change = -0.5
+        dash_power(dash_powerX, dash_powerY)
 
-        player_dist_g = math.sqrt(math.pow(gunnerX-playerX, 2) +
-                                  (math.pow(gunnerY-playerY, 2)))
-        if player_dist_g < 70:
-            gunnerX = 2000
-            print("------------- X_X Killed by Gunner X_X -------------")
-            gameover()
+        check_dash = dash_get(dash_powerX, dash_powerY, playerX, playerY)
+        if check_dash:
+            print("Dash Power Up")
+            dash_powerX = random.randint(936, 1000)
+            dash_powerY = random.randint(0, 536)
 
-        else:
-            encounter_e = chk_encounter_e(
-                e_bulletX, e_bulletY, playerX, playerY)
-            if encounter_e:
-                print("------------- X_X Killed by Bullet X_X -------------")
-                gameover()
+        shield_powerX += shield_powerX_change
+        if shield_powerX <= 0:
+            shield_powerX = random.randint(936, 1000)
+            shield_powerY = random.randint(0, 536)
+            shield_powerX_change = -0.5
+        shield_power(shield_powerX, shield_powerY)
 
-        check_difficulty_med = chk_score_med(score)
-        check_difficulty_hard = chk_score_hard(score)
-        if check_difficulty_med:
-            gunnerY += gunnerY_change
-            if gunnerY >= 536:
-                gunnerY_change = - 1.05
-                gunnerX -= gunnerX_change
-            elif gunnerY <= 0:
-                gunnerY_change = 1.05
-                gunnerX -= gunnerX_change
+        for g in range(gunners):
+            player_dist_g = math.sqrt(math.pow(gunnerX[g]-playerX, 2) +
+                                      (math.pow(gunnerY[g]-playerY, 2)))
+            if player_dist_g < 70:
+                for j in range(gunners):
+                    gunnerX[j] = 2000
+                    gameover()
 
-        elif check_difficulty_hard:
-            gunnerY += gunnerY_change
-            if gunnerY >= 536:
-                gunnerY_change = - 1.65
-                gunnerX -= gunnerX_change
-            elif gunnerY <= 0:
-                gunnerY_change = 1.65
-                gunnerX -= gunnerX_change
+            check_difficulty_med = chk_score_med(score)
+            check_difficulty_hard = chk_score_hard(score)
+            if check_difficulty_med:
+                gunnerY[g] += gunnerY_change[g]
+                if gunnerY[g] >= 536:
+                    gunnerY_change[g] = - 0.8
+                    gunnerX[g] -= gunnerX_change[g]
+                elif gunnerY[g] <= 0:
+                    gunnerY_change[g] = 0.8
+                    gunnerX[g] -= gunnerX_change[g]
 
-        else:
-            gunnerY += gunnerY_change
-            if gunnerY >= 536:
-                gunnerY_change = - 0.75
-                gunnerX -= gunnerX_change
-            elif gunnerY <= 0:
-                gunnerY_change = 0.75
-                gunnerX -= gunnerX_change
+            elif check_difficulty_hard:
+                gunnerY[g] += gunnerY_change[g]
+                if gunnerY[g] >= 536:
+                    gunnerY_change[g] = - 1.2
+                    gunnerX[g] -= gunnerX_change[g]
+                elif gunnerY[g] <= 0:
+                    gunnerY_change[g] = 1.2
+                    gunnerX[g] -= gunnerX_change[g]
 
-        encounter_g = chk_encounter_g(
-            p_bulletX, p_bulletY, gunnerX, gunnerY)
-        if encounter_g:
-            enemy_down = mixer.Sound("music/enemy_down.wav")
-            enemy_down.play()
-            p_bulletX = 50
-            p_bullet = "load"
-            gunnerX = random.randint(936, 1000)
-            gunnerY = random.randint(0, 536)
-            score += 3
-        gunner(gunnerX, gunnerY)
+            else:
+                gunnerY[g] += gunnerY_change[g]
+                if gunnerY[g] >= 536:
+                    gunnerY_change[g] = - 0.6
+                    gunnerX[g] -= gunnerX_change[g]
+                elif gunnerY[g] <= 0:
+                    gunnerY_change[g] = 0.6
+                    gunnerX[g] -= gunnerX_change[g]
 
-        # Burglers All Functions
+            encounter_g = chk_encounter_g(
+                p_bulletX, p_bulletY, gunnerX[g], gunnerY[g])
+            if encounter_g:
+                enemy_down = mixer.Sound("music/enemy_down.wav")
+                enemy_down.play()
+                p_bulletX = 50
+                p_bullet = "load"
+                gunnerX[g] = random.randint(936, 1000)
+                gunnerY[g] = random.randint(0, 536)
+                score += 2
+            gunner(gunnerX[g], gunnerY[g], g)
+
+            # if(player_dist_g > 70):
+            #     if(gunnerY[g] == playerY):
+            #         for e in range(bullets):
+            #             e_bulletY[e] = gunnerY[g]
+            #             e_bulletX[e] = gunnerX[g]
+            #             fire_e_bullet(e_bulletX[e], e_bulletY[e], e)
+
         for b in range(burglers):
             player_dist_b = math.sqrt(math.pow(burglerX[b]-playerX, 2) +
                                       (math.pow(burglerY[b]-playerY, 2)))
             if player_dist_b < 70:
                 for j in range(burglers):
                     burglerX[j] = 2000
-                    print("------------- X_X Killed by Burgler X_X -------------")
                     gameover()
 
             check_difficulty_med = chk_score_med(score)
@@ -399,21 +443,21 @@ while playing:
                 if burglerX[b] <= 0:
                     burglerX[b] = random.randint(936, 1000)
                     burglerY[b] = random.randint(0, 536)
-                    burglerX_change[b] = -1.0
+                    burglerX_change[b] = -0.8
 
             elif check_difficulty_hard:
                 burglerX[b] += burglerX_change[b]
                 if burglerX[b] <= 0:
                     burglerX[b] = random.randint(936, 1000)
                     burglerY[b] = random.randint(0, 536)
-                    burglerX_change[b] = -1.4
+                    burglerX_change[b] = -1.2
 
             else:
                 burglerX[b] += burglerX_change[b]
                 if burglerX[b] <= 0:
                     burglerX[b] = random.randint(936, 1000)
                     burglerY[b] = random.randint(0, 536)
-                    burglerX_change[b] = -0.7
+                    burglerX_change[b] = -0.5
 
             encounter_b = chk_encounter_b(
                 p_bulletX, p_bulletY, burglerX[b], burglerY[b])
@@ -428,54 +472,6 @@ while playing:
 
             burgler(burglerX[b], burglerY[b], b)
 
-        # Wagon All Functions
-        player_dist_w = math.sqrt(math.pow(wagonX-playerX, 2) +
-                                  (math.pow(wagonY-playerY, 2)))
-        if player_dist_w < 70:
-            wagonX = 2000
-            print("------------- X_X Killed by Wagon X_X -------------")
-            gameover()
-
-        check_difficulty_med = chk_score_med(score)
-        check_difficulty_hard = chk_score_hard(score)
-        if check_difficulty_med:
-            wagonY += wagonY_change
-            if wagonY >= 536:
-                wagonY_change = - 1.65
-                wagonX -= wagonX_change
-            elif wagonY <= 0:
-                wagonY_change = 1.65
-                wagonX -= wagonX_change
-
-        elif check_difficulty_hard:
-            wagonY += wagonY_change
-            if wagonY >= 536:
-                wagonY_change = - 2.05
-                wagonX -= wagonX_change
-            elif wagonY <= 0:
-                wagonY_change = 2.05
-                wagonX -= wagonX_change
-        else:
-            wagonY += wagonY_change
-            if wagonY >= 536:
-                wagonY_change = - 1.35
-                wagonX -= wagonX_change
-            elif wagonY <= 0:
-                wagonY_change = 1.35
-                wagonX -= wagonX_change
-
-        encounter_w = chk_encounter_w(
-            p_bulletX, p_bulletY, wagonX, wagonY)
-        if encounter_w:
-            enemy_down = mixer.Sound("music/enemy_down.wav")
-            enemy_down.play()
-            p_bulletX = 50
-            p_bullet = "load"
-            wagonX = random.randint(936, 1000)
-            wagonY = random.randint(0, 536)
-            score += 6
-        wagon(wagonX, wagonY)
-
         if p_bulletX >= 1000:
             p_bulletX = 50
             p_bullet = "load"
@@ -485,20 +481,16 @@ while playing:
             fire_p_bullet(p_bulletX, p_bulletY)
             p_bulletX += p_bulletX_change
 
-        if e_bulletX <= 0:
-            e_bulletX = gunnerX
-            e_bulletY = gunnerY
-            e_bullet = "load"
+
+        if e_bulletX[e] <= 0:
+            e_bulletX[e] = gunnerX[g]
+            e_bulletY[e] = gunnerY[g]
+            e_bullet[e] = "load"
 
         #  Enemy bullet movement
-        if e_bullet is "shoot":
-            fire_e_bullet(e_bulletX, e_bulletY)
-            e_bulletX += e_bulletX_change
-
-        collision = chk_collision(e_bulletX, e_bulletY, playerX, playerY)
-        if collision:
-            e_bullet = "load"
-            p_bullet = "load"
+        if e_bullet[e] is "shoot":
+            fire_e_bullet(e_bulletX[e], e_bulletY[e],e)
+            e_bulletX[e] += e_bulletX_change[e]
 
         show_score(scoreX, scoreY)
 
@@ -506,27 +498,42 @@ while playing:
         if event.type == pygame.QUIT:
             playing = False
 
+        # dash_power = dash_get(dash_powerX, dash_powerY, playerX, playerY)
+        # if dash_power:
+        #     while(dash_count < 10):
+        #         if event.type == pygame.KEYDOWN:
+        #             if event.key == pygame.K_w:
+        #                 playerY_change = -1.1
+        #             if event.key == pygame.K_s:
+        #                 playerY_change = 1.1
+        #             if event.key == pygame.K_SPACE:
+        #                 if p_bullet is "load":
+        #                     dash_count +=1
+        #                     gunshot = mixer.Sound("music/bullet.mp3")
+        #                     gunshot.play()
+        #                     p_bulletY = playerY
+        #                     fire_p_bullet(p_bulletX, p_bulletY)
+
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_w:
-                playerY_change = -1.2
+                playerY_change = -0.7
             if event.key == pygame.K_s:
-                playerY_change = 1.2
+                playerY_change = 0.7
             if event.key == pygame.K_SPACE:
                 if p_bullet is "load":
                     gunshot = mixer.Sound("music/bullet.mp3")
                     gunshot.play()
                     p_bulletY = playerY
                     fire_p_bullet(p_bulletX, p_bulletY)
-
-                if e_bullet is "load":
-                    e_bulletX = gunnerX
-                    e_bulletY = gunnerY
-                    fire_e_bullet(e_bulletX, e_bulletY)
+                for g in range(gunners):
+                    for e in range(bullets):
+                        if e_bullet[e] is "load":
+                            e_bulletX[e] = gunnerX[g]
+                            e_bulletY[e] = gunnerY[g]
+                            fire_e_bullet(e_bulletX[e], e_bulletY[e],e)
 
         if event.type == pygame.KEYUP:
             playerY_change = 0
-        
-        clock.tick(90)
 
     pygame.display.update()
 
